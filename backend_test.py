@@ -32,7 +32,8 @@ class PlayerSwapPersistenceTester:
         self.test_results.append({
             "test": test_name,
             "success": success,
-            "details": details
+            "details": details,
+            "timestamp": datetime.now().isoformat()
         })
         print(f"{status}: {test_name}")
         if details:
