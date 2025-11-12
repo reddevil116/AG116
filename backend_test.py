@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-CourtChime Backend Final Verification Test
-Testing all critical fixes for first round generation and Top Court mode
-Focus: 13 players, 3 courts scenario and comprehensive verification
+CourtChime Backend Test Suite - Player Swap Persistence Testing
+Focus: Comprehensive end-to-end testing of player swap functionality
+Testing the critical scenario where player swaps must persist through session start
 """
 
 import requests
@@ -10,6 +10,7 @@ import json
 import time
 import sys
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 
 # Backend URL from environment
 BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
