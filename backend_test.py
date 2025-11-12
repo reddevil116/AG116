@@ -17,10 +17,14 @@ BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
 CLUB_NAME = "Main Club"
 ACCESS_CODE = "demo123"
 
-class FinalFixesTester:
+class PlayerSwapPersistenceTester:
     def __init__(self):
         self.session = requests.Session()
         self.test_results = []
+        self.generated_matches = []
+        self.original_teams = {}
+        self.swapped_teams = {}
+        self.players = []
         
     def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test result"""
