@@ -536,6 +536,7 @@ export default function PickleballManager() {
   const [loading, setLoading] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [clubSession, setClubSession] = useState<any>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const oneMinuteWarningPlayedRef = useRef(false);
 
