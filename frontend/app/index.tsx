@@ -741,17 +741,22 @@ export default function PickleballManager() {
       
       // CRITICAL FIX: Only reset phase on FIRST app load, not during active play
       // This prevents timer from auto-starting when user logs in, but doesn't pause during gameplay
-      if (!hasInitialized && (data.phase === 'play' || data.phase === 'buffer')) {
-        console.log(`⚠️ Session stuck in ${data.phase} phase on app initialization. Resetting to ready...`);
-        await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/session/pause?club_name=${clubName}`, { method: 'POST' });
-        // Refetch session after reset
-        const resetResponse = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/session?club_name=${clubName}`);
-        const resetData = await resetResponse.json();
-        setSession(resetData);
-        setHasInitialized(true); // Mark as initialized
+      if (!hasInitialized) {
+        // Check if session is stuck in play/buffer phase but paused (indicates app refresh/reload)
+        if ((data.phase === 'play' || data.phase === 'buffer') && data.paused) {
+          console.log(`⚠️ Session paused in ${data.phase} phase on app initialization. Resetting to ready...`);
+          await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/session/pause?club_name=${clubName}`, { method: 'POST' });
+          // Refetch session after reset
+          const resetResponse = await fetch(`${EXPO_PUBLIC_BACKEND_URL}/api/session?club_name=${clubName}`);
+          const resetData = await resetResponse.json();
+          setSession(resetData);
+        } else {
+          setSession(data);
+        }
+        setHasInitialized(true);
       } else {
+        // During active gameplay, just update session state
         setSession(data);
-        if (!hasInitialized) setHasInitialized(true);
       }
       
       // Auto-update session date if it's a new day
