@@ -2665,11 +2665,6 @@ function CourtsDashboard({
                           year: 'numeric'
                         })}
                       </Text>
-                      {match.category === 'Social' && (
-                        <View style={styles.socialBadge}>
-                          <Text style={styles.socialBadgeText}>🎉 Social (Optional Scoring)</Text>
-                        </View>
-                      )}
                     </>
                   )}
                 </View>
