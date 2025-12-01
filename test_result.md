@@ -41,6 +41,23 @@
 
 **Files Modified:** `/app/backend/server.py` (line 874)
 
+#### 4. ✅ Manual Sitout Persistence Fix
+**Issue:** When a player was manually set to sit out, they only sat for 1 round, then automatically came back in the next round.
+
+**Root Cause:** The `schedule_round` function was automatically resetting the `sitNextRound` flag to `False` for all players after generating each round (line 848-852).
+
+**User Requirement:** Manual sitouts should persist until manually cleared by the user (Option B behavior).
+
+**Fix Applied:**
+- Removed automatic reset of `sitNextRound` flag for all players
+- Manual sitouts now persist across all rounds until user manually re-enables the player
+- Added 'S' marker in recentForm array to track sitout rounds
+- Sit count still increments correctly for manual sitouts
+
+**Files Modified:** `/app/backend/server.py` (lines 841-854)
+
+**Testing Status:** ⏳ Needs user verification
+
 ### ✅ TESTING COMPLETED - ALL CRITICAL FIXES VERIFIED
 
 **Date:** 2025-12-01  
