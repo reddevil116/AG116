@@ -844,12 +844,15 @@ async def schedule_round(round_index: int, db_session: AsyncSession = None, club
             db_player = result.scalar_one_or_none()
             if db_player:
                 db_player.sit_count += 1
+                # Mark in recentForm that player sat out this round
+                recent_form = json.loads(db_player.recent_form) if db_player.recent_form else []
+                recent_form.append('S')  # 'S' for Sitout
+                if len(recent_form) > 10:
+                    recent_form = recent_form[-10:]
+                db_player.recent_form = json.dumps(recent_form)
         
-        # Reset sitNextRound flag
-        result = await db_session.execute(select(DBPlayer).where(DBPlayer.id == player.id))
-        db_player = result.scalar_one_or_none()
-        if db_player:
-            db_player.sit_next_round = False
+        # CRITICAL FIX: Do NOT reset sitNextRound flag
+        # Manual sitouts should persist until manually cleared by user (Option B behavior)
     
     # Save matches to database - SQLite version
     for match in created_matches:
