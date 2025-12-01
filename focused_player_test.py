@@ -8,7 +8,7 @@ import requests
 import json
 import time
 
-BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
+BACKEND_URL = "https://chime-roster.preview.emergentagent.com/api"
 
 def test_player_active_status_detailed():
     """Detailed test of player active status functionality"""

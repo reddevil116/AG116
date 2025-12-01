@@ -348,9 +348,14 @@ async def update_player_ratings(match: dict, teamA_score: int, teamB_score: int,
             db_player.recent_form = json.dumps(recent_form)
             db_player.rating_history = json.dumps(rating_history)
             db_player.last_updated = datetime.now()
+        
+        # CRITICAL FIX: Commit the rating changes to database
+        await db_session.commit()
+        print(f"✅ Successfully updated ratings for {len(all_player_ids)} players")
             
     except Exception as e:
-        print(f"Error updating player ratings: {e}")
+        print(f"❌ Error updating player ratings: {e}")
+        await db_session.rollback()
         # Continue without failing the match score update
 
 def calculate_partner_score(player_a: str, player_b: str, histories: Dict[str, Any]) -> int:
@@ -839,12 +844,15 @@ async def schedule_round(round_index: int, db_session: AsyncSession = None, club
             db_player = result.scalar_one_or_none()
             if db_player:
                 db_player.sit_count += 1
+                # Mark in recentForm that player sat out this round
+                recent_form = json.loads(db_player.recent_form) if db_player.recent_form else []
+                recent_form.append('S')  # 'S' for Sitout
+                if len(recent_form) > 10:
+                    recent_form = recent_form[-10:]
+                db_player.recent_form = json.dumps(recent_form)
         
-        # Reset sitNextRound flag
-        result = await db_session.execute(select(DBPlayer).where(DBPlayer.id == player.id))
-        db_player = result.scalar_one_or_none()
-        if db_player:
-            db_player.sit_next_round = False
+        # CRITICAL FIX: Do NOT reset sitNextRound flag
+        # Manual sitouts should persist until manually cleared by user (Option B behavior)
     
     # Save matches to database - SQLite version
     for match in created_matches:
@@ -866,7 +874,7 @@ async def schedule_round(round_index: int, db_session: AsyncSession = None, club
         session_obj.histories = update_histories(match, session_obj.histories)
     
     # Update session histories - SQLite version
-    result = await db_session.execute(select(DBSession).where(DBSession.club_name == "Main Club"))
+    result = await db_session.execute(select(DBSession).where(DBSession.club_name == club_name))
     db_session_obj = result.scalar_one_or_none()
     if db_session_obj:
         db_session_obj.histories = json.dumps(session_obj.histories)
@@ -2360,6 +2368,10 @@ async def start_next_round(club_name: str = "Main Club", db_session: AsyncSessio
         else:
             # Clear previous round matches for legacy mode
             await db_session.execute(delete(DBMatch).where(DBMatch.club_name == club_name))
+            
+            # CRITICAL FIX: Commit the deletion before creating new matches
+            await db_session.commit()
+            print(f"🗑️ Deleted all previous matches for legacy mode round {next_round}")
             
             # Get all players for reshuffling
             result = await db_session.execute(select(DBPlayer).where(DBPlayer.club_name == club_name))

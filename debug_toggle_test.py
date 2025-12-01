@@ -7,7 +7,7 @@ import requests
 import json
 import time
 
-BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
+BACKEND_URL = "https://chime-roster.preview.emergentagent.com/api"
 
 def debug_toggle_issue():
     session = requests.Session()

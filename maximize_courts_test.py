@@ -10,7 +10,7 @@ import sys
 from typing import Dict, List, Any
 
 # Backend URL from environment
-BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
+BACKEND_URL = "https://chime-roster.preview.emergentagent.com/api"
 
 class MaximizeCourtsBackendTester:
     def __init__(self):

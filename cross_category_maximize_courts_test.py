@@ -10,7 +10,7 @@ import time
 from typing import Dict, List, Any
 
 # Configuration
-BASE_URL = "https://courtchime.preview.emergentagent.com/api"
+BASE_URL = "https://chime-roster.preview.emergentagent.com/api"
 CLUB_NAME = "Main Club"
 ACCESS_CODE = "demo123"
 

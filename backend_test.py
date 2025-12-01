@@ -1,520 +1,539 @@
 #!/usr/bin/env python3
 """
-CourtChime Backend Test Suite - Player Swap Persistence Testing
-Focus: Comprehensive end-to-end testing of player swap functionality
-Testing the critical scenario where player swaps must persist through session start
+CourtChime Backend Testing - Critical Bug Fixes Verification
+Testing the rating system updates and next round generation fixes
 """
 
 import requests
 import json
 import time
-import sys
+import random
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-# Backend URL from environment
-BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
-CLUB_NAME = "Main Club"
-ACCESS_CODE = "demo123"
-
-class PlayerSwapPersistenceTester:
+class CourtChimeBackendTester:
     def __init__(self):
-        self.session = requests.Session()
-        self.test_results = []
-        self.generated_matches = []
-        self.original_teams = {}
-        self.swapped_teams = {}
+        self.base_url = "https://chime-roster.preview.emergentagent.com/api"
+        self.club_name = "Main Club"  # As specified in review request
+        self.access_code = "demo123"  # Standard access code
+        self.session_data = None
         self.players = []
+        self.matches = []
+        self.test_results = []
+        self.initial_player_data = {}
         
-    def log_test(self, test_name: str, success: bool, details: str = ""):
-        """Log test result"""
-        status = "✅ PASS" if success else "❌ FAIL"
-        self.test_results.append({
+    def log_test(self, test_name: str, status: str, details: str = ""):
+        """Log test results"""
+        result = {
             "test": test_name,
-            "success": success,
+            "status": status,
             "details": details,
             "timestamp": datetime.now().isoformat()
-        })
-        print(f"{status}: {test_name}")
+        }
+        self.test_results.append(result)
+        status_emoji = "✅" if status == "PASS" else "❌" if status == "FAIL" else "⚠️"
+        print(f"{status_emoji} {test_name}: {status}")
         if details:
             print(f"   Details: {details}")
     
-    def authenticate(self) -> bool:
-        """Authenticate with the club"""
+    def make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> Dict:
+        """Make HTTP request with error handling"""
+        url = f"{self.base_url}{endpoint}"
         try:
-            login_data = {
-                "club_name": CLUB_NAME,
-                "access_code": ACCESS_CODE
-            }
-            
-            response = self.session.post(f"{BACKEND_URL}/auth/login", json=login_data)
-            if response.status_code == 200:
-                data = response.json()
-                self.log_test("Club Authentication", True, f"Authenticated as {data.get('club_name')}")
-                return True
+            if method.upper() == "GET":
+                response = requests.get(url, params=params, timeout=30)
+            elif method.upper() == "POST":
+                response = requests.post(url, json=data, params=params, timeout=30)
+            elif method.upper() == "PUT":
+                response = requests.put(url, json=data, params=params, timeout=30)
+            elif method.upper() == "PATCH":
+                response = requests.patch(url, json=data, params=params, timeout=30)
             else:
-                self.log_test("Club Authentication", False, f"Status: {response.status_code}")
-                return False
-        except Exception as e:
-            self.log_test("Club Authentication", False, f"Error: {str(e)}")
+                raise ValueError(f"Unsupported method: {method}")
+            
+            return {
+                "status_code": response.status_code,
+                "data": response.json() if response.content else {},
+                "success": 200 <= response.status_code < 300
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                "status_code": 0,
+                "data": {"error": str(e)},
+                "success": False
+            }
+        except json.JSONDecodeError:
+            return {
+                "status_code": response.status_code,
+                "data": {"error": "Invalid JSON response"},
+                "success": False
+            }
+    
+    def authenticate_club(self) -> bool:
+        """Authenticate with Main Club"""
+        login_data = {
+            "club_name": self.club_name,
+            "access_code": self.access_code
+        }
+        response = self.make_request("POST", "/auth/login", login_data)
+        if response["success"]:
+            self.session_data = response["data"]
+            self.log_test("Club Authentication", "PASS", f"Authenticated as {self.session_data.get('display_name')}")
+            return True
+        else:
+            self.log_test("Club Authentication", "FAIL", f"Status: {response['status_code']}")
             return False
     
-    def get_active_players(self) -> List[Dict]:
-        """Get all active players"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/players", params={"club_name": CLUB_NAME})
-            if response.status_code == 200:
-                players = response.json()
-                active_players = [p for p in players if p.get('isActive', True)]
-                self.players = active_players
-                self.log_test("Get Active Players", True, f"Found {len(active_players)} active players")
-                return active_players
-            else:
-                self.log_test("Get Active Players", False, f"Status: {response.status_code}")
-                return []
-        except Exception as e:
-            self.log_test("Get Active Players", False, f"Error: {str(e)}")
+    def get_players(self) -> List[Dict]:
+        """Get current player data"""
+        params = {"club_name": self.club_name}
+        response = self.make_request("GET", "/players", params=params)
+        if response["success"]:
+            self.players = response["data"]
+            active_count = len([p for p in self.players if p.get('isActive', False)])
+            self.log_test("Get Players", "PASS", f"Retrieved {len(self.players)} players ({active_count} active)")
+            return self.players
+        else:
+            self.log_test("Get Players", "FAIL", f"Status: {response['status_code']}")
             return []
     
-    def generate_matches(self) -> bool:
-        """Generate initial matches"""
-        try:
-            response = self.session.post(f"{BACKEND_URL}/session/generate-matches", 
-                                       params={"club_name": CLUB_NAME})
-            if response.status_code == 200:
-                self.log_test("Generate Matches", True, "Generated matches successfully")
-                return True
-            else:
-                error_text = response.text
-                self.log_test("Generate Matches", False, f"Status {response.status_code}: {error_text}")
-                return False
-        except Exception as e:
-            self.log_test("Generate Matches", False, f"Error: {str(e)}")
+    def record_initial_player_stats(self):
+        """Record initial player ratings and stats for comparison"""
+        self.get_players()
+        for player in self.players:
+            if player.get('isActive', False):
+                self.initial_player_data[player['id']] = {
+                    'name': player['name'],
+                    'rating': player['rating'],
+                    'wins': player['wins'],
+                    'losses': player['losses'],
+                    'matchesPlayed': player['matchesPlayed'],
+                    'recentForm': player['recentForm'].copy()
+                }
+        
+        active_count = len(self.initial_player_data)
+        self.log_test("Record Initial Stats", "PASS", f"Recorded stats for {active_count} active players")
+    
+    def generate_round1_matches(self) -> bool:
+        """Generate Round 1 matches"""
+        params = {"club_name": self.club_name}
+        response = self.make_request("POST", "/session/generate-matches", params=params)
+        if response["success"]:
+            matches_count = response["data"].get('matchesGenerated', 0)
+            self.log_test("Generate Round 1", "PASS", f"Generated {matches_count} matches")
+            return True
+        else:
+            self.log_test("Generate Round 1", "FAIL", f"Status: {response['status_code']}")
+            return False
+    
+    def start_session(self) -> bool:
+        """Start the session (transition to play phase)"""
+        params = {"club_name": self.club_name}
+        response = self.make_request("POST", "/session/start", params=params)
+        if response["success"]:
+            phase = response["data"].get('phase', 'unknown')
+            self.log_test("Start Session", "PASS", f"Session phase: {phase}")
+            return True
+        else:
+            self.log_test("Start Session", "FAIL", f"Status: {response['status_code']}")
             return False
     
     def get_matches(self) -> List[Dict]:
         """Get current matches"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/matches", params={"club_name": CLUB_NAME})
-            if response.status_code == 200:
-                matches = response.json()
-                self.log_test("Get Matches", True, f"Retrieved {len(matches)} matches")
-                return matches
-            else:
-                error_text = response.text
-                self.log_test("Get Matches", False, f"Status {response.status_code}: {error_text}")
-                return []
-        except Exception as e:
-            self.log_test("Get Matches", False, f"Error: {str(e)}")
+        params = {"club_name": self.club_name}
+        response = self.make_request("GET", "/matches", params=params)
+        if response["success"]:
+            self.matches = response["data"]
+            self.log_test("Get Matches", "PASS", f"Retrieved {len(self.matches)} matches")
+            return self.matches
+        else:
+            self.log_test("Get Matches", "FAIL", f"Status: {response['status_code']}")
             return []
     
-    def update_match_teams(self, match_id: str, team_a: List[str], team_b: List[str]) -> bool:
-        """Update match teams via PUT endpoint"""
-        try:
-            update_data = {
-                "teamA": team_a,
-                "teamB": team_b
-            }
-            
-            response = self.session.put(f"{BACKEND_URL}/matches/{match_id}", 
-                                      params={"club_name": CLUB_NAME}, 
-                                      json=update_data)
-            if response.status_code == 200:
-                self.log_test("Update Match Teams", True, f"Updated match {match_id[:8]}...")
-                return True
-            else:
-                error_text = response.text
-                self.log_test("Update Match Teams", False, f"Status {response.status_code}: {error_text}")
-                return False
-        except Exception as e:
-            self.log_test("Update Match Teams", False, f"Error: {str(e)}")
-            return False
-    
-    def start_session(self) -> bool:
-        """Start the session (ready -> play)"""
-        try:
-            response = self.session.post(f"{BACKEND_URL}/session/start", 
-                                       params={"club_name": CLUB_NAME})
-            if response.status_code == 200:
-                self.log_test("Start Session", True, "Session started successfully")
-                return True
-            else:
-                error_text = response.text
-                self.log_test("Start Session", False, f"Status {response.status_code}: {error_text}")
-                return False
-        except Exception as e:
-            self.log_test("Start Session", False, f"Error: {str(e)}")
-            return False
-    
-    def get_session_state(self) -> Optional[Dict]:
-        """Get current session state"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/session", params={"club_name": CLUB_NAME})
-            if response.status_code == 200:
-                session_data = response.json()
-                self.log_test("Get Session State", True, f"Phase: {session_data.get('phase', 'unknown')}")
-                return session_data
-            else:
-                error_text = response.text
-                self.log_test("Get Session State", False, f"Status {response.status_code}: {error_text}")
-                return None
-        except Exception as e:
-            self.log_test("Get Session State", False, f"Error: {str(e)}")
-            return None
-    
-    def record_original_teams(self, matches: List[Dict]):
-        """Record original team assignments"""
-        self.original_teams = {}
-        for match in matches:
-            self.original_teams[match['id']] = {
-                'teamA': match['teamA'].copy(),
-                'teamB': match['teamB'].copy()
-            }
-        self.log_test("Record Original Teams", True, f"Recorded teams for {len(matches)} matches")
-    
-    def create_swap_scenario(self, matches: List[Dict]) -> Dict[str, Any]:
-        """Create a realistic player swap scenario"""
-        if len(matches) < 2:
-            self.log_test("Create Swap Scenario", False, "Need at least 2 matches for swap scenario")
-            return None
-            
-        # Find two matches to swap players between
-        match1 = matches[0]
-        match2 = matches[1] if len(matches) > 1 else matches[0]
+    def save_match_score(self, match_id: str, score_a: int, score_b: int) -> bool:
+        """Save score for a specific match"""
+        params = {"club_name": self.club_name}
+        score_data = {"scoreA": score_a, "scoreB": score_b}
         
-        # Create swap: Take one player from match1 teamA and swap with one from match2 teamA
-        if len(match1['teamA']) > 0 and len(match2['teamA']) > 0:
-            player1_id = match1['teamA'][0]
-            player2_id = match2['teamA'][0]
-            
-            # Find player names for logging
-            player1_name = next((p['name'] for p in self.players if p['id'] == player1_id), "Unknown")
-            player2_name = next((p['name'] for p in self.players if p['id'] == player2_id), "Unknown")
-            
-            # Create new team assignments
-            new_match1_teamA = match1['teamA'].copy()
-            new_match2_teamA = match2['teamA'].copy()
-            
-            # Swap the players
-            new_match1_teamA[0] = player2_id
-            new_match2_teamA[0] = player1_id
-            
-            swap_scenario = {
-                'match1': {
-                    'id': match1['id'],
-                    'original_teamA': match1['teamA'].copy(),
-                    'original_teamB': match1['teamB'].copy(),
-                    'new_teamA': new_match1_teamA,
-                    'new_teamB': match1['teamB'].copy()
-                },
-                'match2': {
-                    'id': match2['id'],
-                    'original_teamA': match2['teamA'].copy(),
-                    'original_teamB': match2['teamB'].copy(),
-                    'new_teamA': new_match2_teamA,
-                    'new_teamB': match2['teamB'].copy()
-                },
-                'swapped_players': {
-                    'player1': {'id': player1_id, 'name': player1_name},
-                    'player2': {'id': player2_id, 'name': player2_name}
-                }
-            }
-            
-            self.log_test("Create Swap Scenario", True, 
-                         f"Swapping {player1_name} ↔ {player2_name} between matches")
-            return swap_scenario
-            
-        self.log_test("Create Swap Scenario", False, "Could not create valid swap scenario")
-        return None
-    
-    def execute_player_swaps(self, swap_scenario: Dict[str, Any]) -> bool:
-        """Execute the player swaps via API"""
-        try:
-            # Update match 1
-            success1 = self.update_match_teams(
-                swap_scenario['match1']['id'],
-                swap_scenario['match1']['new_teamA'],
-                swap_scenario['match1']['new_teamB']
-            )
-            
-            # Update match 2 (if different from match 1)
-            success2 = True
-            if swap_scenario['match1']['id'] != swap_scenario['match2']['id']:
-                success2 = self.update_match_teams(
-                    swap_scenario['match2']['id'],
-                    swap_scenario['match2']['new_teamA'],
-                    swap_scenario['match2']['new_teamB']
-                )
-            
-            if success1 and success2:
-                # Record swapped teams for verification
-                self.swapped_teams[swap_scenario['match1']['id']] = {
-                    'teamA': swap_scenario['match1']['new_teamA'],
-                    'teamB': swap_scenario['match1']['new_teamB']
-                }
-                if swap_scenario['match1']['id'] != swap_scenario['match2']['id']:
-                    self.swapped_teams[swap_scenario['match2']['id']] = {
-                        'teamA': swap_scenario['match2']['new_teamA'],
-                        'teamB': swap_scenario['match2']['new_teamB']
-                    }
-                
-                self.log_test("Execute Player Swaps", True, "All swaps executed successfully")
-                return True
-            else:
-                self.log_test("Execute Player Swaps", False, "One or more swaps failed")
-                return False
-                
-        except Exception as e:
-            self.log_test("Execute Player Swaps", False, f"Error: {str(e)}")
-            return False
-    
-    def verify_swaps_persisted(self, matches: List[Dict]) -> bool:
-        """Verify that swaps are still present in retrieved matches"""
-        try:
-            all_swaps_verified = True
-            
-            for match in matches:
-                match_id = match['id']
-                if match_id in self.swapped_teams:
-                    expected_teamA = self.swapped_teams[match_id]['teamA']
-                    expected_teamB = self.swapped_teams[match_id]['teamB']
-                    actual_teamA = match['teamA']
-                    actual_teamB = match['teamB']
-                    
-                    if actual_teamA != expected_teamA or actual_teamB != expected_teamB:
-                        self.log_test("Verify Swaps Persisted", False, 
-                                     f"Match {match_id[:8]}... teams don't match expected swapped teams")
-                        all_swaps_verified = False
-                        break
-            
-            if all_swaps_verified:
-                self.log_test("Verify Swaps Persisted", True, 
-                             f"All {len(self.swapped_teams)} swapped matches verified")
-                return True
-            else:
-                return False
-                
-        except Exception as e:
-            self.log_test("Verify Swaps Persisted", False, f"Error: {str(e)}")
-            return False
-    
-    def verify_no_reset_to_original(self, matches: List[Dict]) -> bool:
-        """Verify matches haven't been reset to original teams"""
-        try:
-            reset_detected = False
-            
-            for match in matches:
-                match_id = match['id']
-                if match_id in self.swapped_teams and match_id in self.original_teams:
-                    # Check if current teams match original (which would be bad)
-                    current_teamA = match['teamA']
-                    current_teamB = match['teamB']
-                    original_teamA = self.original_teams[match_id]['teamA']
-                    original_teamB = self.original_teams[match_id]['teamB']
-                    
-                    if current_teamA == original_teamA and current_teamB == original_teamB:
-                        self.log_test("Verify No Reset to Original", False, 
-                                     f"Match {match_id[:8]}... was reset to original teams")
-                        reset_detected = True
-                        break
-            
-            if not reset_detected:
-                self.log_test("Verify No Reset to Original", True, 
-                             "No matches were reset to original teams")
-                return True
-            else:
-                return False
-                
-        except Exception as e:
-            self.log_test("Verify No Reset to Original", False, f"Error: {str(e)}")
-            return False
-    
-    def test_multiple_swaps(self, matches: List[Dict]) -> bool:
-        """Test multiple consecutive swaps on the same match"""
-        if len(matches) < 1:
-            self.log_test("Multiple Swaps Test", False, "No matches available for multiple swap test")
-            return False
-            
-        # Try swapping the same match multiple times
-        match = matches[0]
-        
-        # First swap - reverse team A order if possible
-        if len(match['teamA']) >= 2:
-            new_teamA = [match['teamA'][1], match['teamA'][0]]
-            if len(match['teamA']) > 2:
-                new_teamA.extend(match['teamA'][2:])
-            
-            success1 = self.update_match_teams(match['id'], new_teamA, match['teamB'])
-            
-            if success1:
-                # Second swap - swap first player with a different player if available
-                if len(self.players) > len(match['teamA']) + len(match['teamB']):
-                    # Find a player not in this match
-                    players_in_match = set(match['teamA'] + match['teamB'])
-                    available_players = [p for p in self.players if p['id'] not in players_in_match]
-                    
-                    if available_players:
-                        # Swap first player of teamA with an available player
-                        final_teamA = new_teamA.copy()
-                        final_teamA[0] = available_players[0]['id']
-                        
-                        success2 = self.update_match_teams(match['id'], final_teamA, match['teamB'])
-                        
-                        if success2:
-                            self.log_test("Multiple Swaps Test", True, "Multiple consecutive swaps successful")
-                            return True
-                        else:
-                            self.log_test("Multiple Swaps Test", False, "Second swap failed")
-                            return False
-                    else:
-                        self.log_test("Multiple Swaps Test", False, "No available players for second swap")
-                        return False
-                else:
-                    self.log_test("Multiple Swaps Test", False, "Not enough players for multiple swaps")
-                    return False
-            else:
-                self.log_test("Multiple Swaps Test", False, "First swap failed")
-                return False
+        response = self.make_request("PUT", f"/matches/{match_id}/score", score_data, params=params)
+        if response["success"]:
+            self.log_test("Save Match Score", "PASS", f"Match {match_id[:8]}... scored {score_a}-{score_b}")
+            return True
         else:
-            self.log_test("Multiple Swaps Test", False, "Not enough players in team for swap test")
+            self.log_test("Save Match Score", "FAIL", f"Status: {response['status_code']}")
             return False
     
-    def run_comprehensive_test(self):
-        """Run the comprehensive player swap persistence test"""
-        print("🎯 STARTING COMPREHENSIVE PLAYER SWAP PERSISTENCE TEST")
+    def get_session_state(self) -> Dict:
+        """Get current session state"""
+        params = {"club_name": self.club_name}
+        response = self.make_request("GET", "/session", params=params)
+        if response["success"]:
+            session_data = response["data"]
+            current_round = session_data.get('currentRound', 0)
+            phase = session_data.get('phase', 'unknown')
+            self.log_test("Get Session State", "PASS", f"Round {current_round}, Phase: {phase}")
+            return session_data
+        else:
+            self.log_test("Get Session State", "FAIL", f"Status: {response['status_code']}")
+            return {}
+    
+    def advance_to_next_round(self) -> bool:
+        """Advance to next round"""
+        params = {"club_name": self.club_name}
+        response = self.make_request("POST", "/session/next-round", params=params)
+        if response["success"]:
+            new_round = response["data"].get('round', 0)
+            self.log_test("Advance to Next Round", "PASS", f"Advanced to round {new_round}")
+            return True
+        else:
+            self.log_test("Advance to Next Round", "FAIL", f"Status: {response['status_code']}")
+            return False
+    
+    def verify_rating_updates(self) -> bool:
+        """Verify that player ratings have been updated after scoring matches"""
+        current_players = self.get_players()
+        
+        rating_changes_found = 0
+        wins_updates_found = 0
+        losses_updates_found = 0
+        matches_played_updates = 0
+        recent_form_updates = 0
+        
+        print("\n📊 RATING SYSTEM VERIFICATION:")
         print("=" * 60)
         
-        # Step 1: Authentication
-        if not self.authenticate():
-            print("❌ Authentication failed - aborting test")
-            return
+        for player in current_players:
+            if not player.get('isActive', False):
+                continue
+                
+            player_id = player['id']
+            if player_id not in self.initial_player_data:
+                continue
+            
+            initial = self.initial_player_data[player_id]
+            current_rating = player['rating']
+            current_wins = player['wins']
+            current_losses = player['losses']
+            current_matches = player['matchesPlayed']
+            current_form = player['recentForm']
+            
+            # Check for changes
+            rating_changed = abs(current_rating - initial['rating']) > 0.01
+            wins_changed = current_wins != initial['wins']
+            losses_changed = current_losses != initial['losses']
+            matches_changed = current_matches != initial['matchesPlayed']
+            form_changed = len(current_form) != len(initial['recentForm'])
+            
+            if rating_changed or wins_changed or losses_changed or matches_changed or form_changed:
+                print(f"\n🏓 {player['name']}:")
+                print(f"   Rating: {initial['rating']:.2f} → {current_rating:.2f} " +
+                      f"({'✅' if rating_changed else '❌'})")
+                print(f"   Wins: {initial['wins']} → {current_wins} " +
+                      f"({'✅' if wins_changed else '❌'})")
+                print(f"   Losses: {initial['losses']} → {current_losses} " +
+                      f"({'✅' if losses_changed else '❌'})")
+                print(f"   Matches: {initial['matchesPlayed']} → {current_matches} " +
+                      f"({'✅' if matches_changed else '❌'})")
+                print(f"   Recent Form: {initial['recentForm']} → {current_form} " +
+                      f"({'✅' if form_changed else '❌'})")
+            
+            if rating_changed:
+                rating_changes_found += 1
+            if wins_changed:
+                wins_updates_found += 1
+            if losses_changed:
+                losses_updates_found += 1
+            if matches_changed:
+                matches_played_updates += 1
+            if form_changed:
+                recent_form_updates += 1
         
-        # Step 2: Get active players
-        players = self.get_active_players()
-        if len(players) < 8:
-            self.log_test("Player Count Check", False, f"Need at least 8 players, found {len(players)}")
-            return
-        else:
-            self.log_test("Player Count Check", True, f"Found {len(players)} active players")
+        print(f"\n📈 SUMMARY:")
+        print(f"   Players with rating changes: {rating_changes_found}")
+        print(f"   Players with wins updates: {wins_updates_found}")
+        print(f"   Players with losses updates: {losses_updates_found}")
+        print(f"   Players with matches played updates: {matches_played_updates}")
+        print(f"   Players with recent form updates: {recent_form_updates}")
         
-        # Step 3: Generate initial matches
-        if not self.generate_matches():
-            print("❌ Match generation failed - aborting test")
-            return
+        # Rating system is working if we see updates in key metrics
+        rating_system_working = (rating_changes_found > 0 and 
+                               matches_played_updates > 0 and
+                               (wins_updates_found > 0 or losses_updates_found > 0))
         
-        # Step 4: Get initial matches and record original teams
-        initial_matches = self.get_matches()
-        if len(initial_matches) < 2:
-            self.log_test("Initial Match Count", False, f"Need at least 2 matches, found {len(initial_matches)}")
-            return
-        else:
-            self.log_test("Initial Match Count", True, f"Found {len(initial_matches)} matches")
+        self.log_test("Rating System Updates", "PASS" if rating_system_working else "FAIL",
+                      f"Found {rating_changes_found} rating changes, {matches_played_updates} match updates")
         
-        self.record_original_teams(initial_matches)
+        return rating_system_working
+    
+    def test_rating_system_updates(self) -> bool:
+        """Test 1: Rating System Updates"""
+        print("\n🎯 TEST 1: RATING SYSTEM UPDATES")
+        print("=" * 50)
         
-        # Step 5: Create and execute swap scenario
-        swap_scenario = self.create_swap_scenario(initial_matches)
-        if not swap_scenario:
-            print("❌ Could not create swap scenario - aborting test")
-            return
+        # Step 1: Record initial player stats
+        self.record_initial_player_stats()
         
-        if not self.execute_player_swaps(swap_scenario):
-            print("❌ Player swaps failed - aborting test")
-            return
+        # Step 2: Generate Round 1 matches
+        if not self.generate_round1_matches():
+            return False
         
-        # Step 6: Verify swaps are saved in database
-        matches_after_swap = self.get_matches()
-        if not self.verify_swaps_persisted(matches_after_swap):
-            print("❌ Swaps not persisted - critical failure")
-            return
-        
-        # Step 7: Start session (ready -> play)
+        # Step 3: Start the session
         if not self.start_session():
-            print("❌ Session start failed - aborting test")
-            return
+            return False
         
-        # Step 8: Verify session phase changed
+        # Step 4: Get matches and save scores for 2-3 matches
+        matches = self.get_matches()
+        if not matches:
+            self.log_test("Test 1 - Get Matches", "FAIL", "No matches found")
+            return False
+        
+        # Score first 3 matches with realistic scores
+        test_scores = [(11, 9), (11, 7), (8, 11)]
+        scored_matches = 0
+        
+        for i, match in enumerate(matches[:3]):
+            if i >= len(test_scores):
+                break
+            score_a, score_b = test_scores[i]
+            if self.save_match_score(match['id'], score_a, score_b):
+                scored_matches += 1
+        
+        if scored_matches == 0:
+            self.log_test("Test 1 - Score Matches", "FAIL", "No matches scored successfully")
+            return False
+        
+        self.log_test("Test 1 - Score Matches", "PASS", f"Scored {scored_matches} matches")
+        
+        # Step 5: Verify rating updates
+        return self.verify_rating_updates()
+    
+    def test_next_round_generation(self) -> bool:
+        """Test 2: Next Round Generation"""
+        print("\n🎯 TEST 2: NEXT ROUND GENERATION")
+        print("=" * 50)
+        
+        # Ensure we have Round 1 matches with scores
+        matches = self.get_matches()
+        round1_matches = [m for m in matches if m.get('roundIndex') == 1]
+        
+        if not round1_matches:
+            self.log_test("Test 2 - Round 1 Check", "FAIL", "No Round 1 matches found")
+            return False
+        
+        # Check if matches have scores
+        scored_matches = [m for m in round1_matches if m.get('scoreA') is not None]
+        if len(scored_matches) == 0:
+            self.log_test("Test 2 - Scored Matches Check", "FAIL", "No scored matches in Round 1")
+            return False
+        
+        self.log_test("Test 2 - Round 1 Check", "PASS", 
+                     f"Found {len(round1_matches)} Round 1 matches, {len(scored_matches)} scored")
+        
+        # Advance to Round 2
+        if not self.advance_to_next_round():
+            return False
+        
+        # Verify session is now in Round 2
         session_state = self.get_session_state()
-        if session_state and session_state.get('phase') == 'play':
-            self.log_test("Session Phase Verification", True, "Session phase is 'play'")
-        else:
-            self.log_test("Session Phase Verification", False, 
-                         f"Expected 'play', got '{session_state.get('phase') if session_state else 'unknown'}'")
+        current_round = session_state.get('currentRound', 0)
         
-        # Step 9: CRITICAL TEST - Get matches after session start
-        matches_after_session_start = self.get_matches()
+        if current_round != 2:
+            self.log_test("Test 2 - Round Check", "FAIL", 
+                          f"Expected round 2, got round {current_round}")
+            return False
         
-        # Step 10: Verify swaps still persist (not reset)
-        if not self.verify_swaps_persisted(matches_after_session_start):
-            print("❌ CRITICAL FAILURE: Swaps lost after session start")
-            return
+        # Get matches and check for Round 2 matches
+        all_matches = self.get_matches()
+        round2_matches = [m for m in all_matches if m.get('roundIndex') == 2]
         
-        # Step 11: Verify no reset to original teams
-        if not self.verify_no_reset_to_original(matches_after_session_start):
-            print("❌ CRITICAL FAILURE: Matches reset to original teams")
-            return
+        if not round2_matches:
+            self.log_test("Test 2 - Round 2 Matches", "FAIL", "No Round 2 matches generated")
+            return False
         
-        # Step 12: Edge case testing - Multiple swaps
-        self.test_multiple_swaps(matches_after_session_start)
+        # Verify Round 2 matches have proper structure
+        valid_matches = 0
+        for match in round2_matches:
+            if (match.get('teamA') and match.get('teamB') and 
+                match.get('courtIndex') is not None and
+                match.get('roundIndex') == 2):
+                valid_matches += 1
         
+        success = valid_matches > 0
+        self.log_test("Test 2 - Round 2 Matches", "PASS" if success else "FAIL",
+                     f"Generated {len(round2_matches)} Round 2 matches, {valid_matches} valid")
+        
+        # Verify session phase
+        phase = session_state.get('phase', 'unknown')
+        phase_correct = phase == 'ready'
+        self.log_test("Test 2 - Session Phase", "PASS" if phase_correct else "FAIL", f"Phase: {phase}")
+        
+        return success and phase_correct
+    
+    def test_multi_round_flow(self) -> bool:
+        """Test 3: Multi-Round Flow"""
+        print("\n🎯 TEST 3: MULTI-ROUND FLOW")
+        print("=" * 50)
+        
+        # Record initial stats for accumulation tracking
+        initial_players = self.get_players()
+        initial_stats = {}
+        for player in initial_players:
+            if player.get('isActive', False):
+                initial_stats[player['id']] = {
+                    'rating': player['rating'],
+                    'wins': player['wins'],
+                    'losses': player['losses'],
+                    'matchesPlayed': player['matchesPlayed']
+                }
+        
+        # Get current session state
+        session_state = self.get_session_state()
+        starting_round = session_state.get('currentRound', 1)
+        
+        self.log_test("Test 3 - Initial State", "PASS", f"Starting from round {starting_round}")
+        
+        # If we're not in Round 2 yet, we need to complete Round 1 first
+        if starting_round < 2:
+            # Score any unscored Round 1 matches
+            matches = self.get_matches()
+            round1_matches = [m for m in matches if m.get('roundIndex') == 1 and m.get('scoreA') is None]
+            
+            for match in round1_matches[:2]:  # Score a couple more matches
+                self.save_match_score(match['id'], 11, 8)
+            
+            # Advance to Round 2
+            if not self.advance_to_next_round():
+                return False
+        
+        # Now we should be in Round 2 - score some Round 2 matches
+        matches = self.get_matches()
+        round2_matches = [m for m in matches if m.get('roundIndex') == 2]
+        
+        if not round2_matches:
+            self.log_test("Test 3 - Round 2 Matches", "FAIL", "No Round 2 matches found")
+            return False
+        
+        # Score Round 2 matches
+        scored_r2 = 0
+        for match in round2_matches[:2]:
+            if self.save_match_score(match['id'], 11, 6):
+                scored_r2 += 1
+        
+        self.log_test("Test 3 - Score Round 2", "PASS" if scored_r2 > 0 else "FAIL", 
+                     f"Scored {scored_r2} Round 2 matches")
+        
+        # Advance to Round 3
+        if not self.advance_to_next_round():
+            return False
+        
+        # Verify Round 3 generation
+        session_state = self.get_session_state()
+        current_round = session_state.get('currentRound', 0)
+        
+        if current_round != 3:
+            self.log_test("Test 3 - Round 3 Check", "FAIL", 
+                          f"Expected round 3, got round {current_round}")
+            return False
+        
+        # Check for Round 3 matches
+        all_matches = self.get_matches()
+        round3_matches = [m for m in all_matches if m.get('roundIndex') == 3]
+        
+        round3_success = len(round3_matches) > 0
+        self.log_test("Test 3 - Round 3 Generation", "PASS" if round3_success else "FAIL",
+                     f"Generated {len(round3_matches)} Round 3 matches")
+        
+        # Verify rating accumulation across rounds
+        final_players = self.get_players()
+        accumulation_verified = 0
+        
+        print("\n📊 MULTI-ROUND ACCUMULATION VERIFICATION:")
+        for player in final_players:
+            if not player.get('isActive', False):
+                continue
+                
+            player_id = player['id']
+            if player_id not in initial_stats:
+                continue
+            
+            initial = initial_stats[player_id]
+            final_matches = player['matchesPlayed']
+            final_rating = player['rating']
+            
+            matches_increased = final_matches > initial['matchesPlayed']
+            rating_changed = abs(final_rating - initial['rating']) > 0.01
+            
+            if matches_increased or rating_changed:
+                print(f"   {player['name']}: Matches {initial['matchesPlayed']}→{final_matches}, " +
+                      f"Rating {initial['rating']:.2f}→{final_rating:.2f}")
+                accumulation_verified += 1
+        
+        accumulation_success = accumulation_verified > 0
+        self.log_test("Test 3 - Stats Accumulation", "PASS" if accumulation_success else "FAIL",
+                     f"{accumulation_verified} players show stat accumulation")
+        
+        return round3_success and accumulation_success
+    
+    def run_critical_bug_fix_tests(self):
+        """Run all critical bug fix verification tests"""
+        print("🚀 COURTCHIME CRITICAL BUG FIXES VERIFICATION")
+        print("=" * 60)
+        print(f"Backend URL: {self.base_url}")
+        print(f"Club: {self.club_name}")
+        print("=" * 60)
+        
+        start_time = time.time()
+        
+        # Authenticate first
+        if not self.authenticate_club():
+            print("❌ Authentication failed - cannot proceed with tests")
+            return False
+        
+        # Run the three critical tests
+        test1_result = self.test_rating_system_updates()
+        test2_result = self.test_next_round_generation()
+        test3_result = self.test_multi_round_flow()
+        
+        end_time = time.time()
+        duration = end_time - start_time
+        
+        # Summary
         print("\n" + "=" * 60)
-        print("🎯 COMPREHENSIVE TEST COMPLETED")
-        self.print_test_summary()
-    
-    def print_test_summary(self):
-        """Print comprehensive test summary"""
+        print("🎯 CRITICAL BUG FIXES VERIFICATION SUMMARY")
+        print("=" * 60)
+        
         total_tests = len(self.test_results)
-        passed_tests = len([t for t in self.test_results if t['success']])
-        failed_tests = len([t for t in self.test_results if not t['success']])
+        passed_tests = sum(1 for result in self.test_results if result['status'] == 'PASS')
         
-        print(f"\n📊 TEST SUMMARY:")
         print(f"Total Tests: {total_tests}")
-        print(f"✅ Passed: {passed_tests}")
-        print(f"❌ Failed: {failed_tests}")
+        print(f"Passed: {passed_tests}")
+        print(f"Failed: {total_tests - passed_tests}")
         print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+        print(f"Duration: {duration:.2f} seconds")
         
-        if failed_tests > 0:
-            print(f"\n❌ FAILED TESTS:")
-            for test in self.test_results:
-                if not test['success']:
-                    print(f"  - {test['test']}: {test['details']}")
+        print("\n📋 DETAILED RESULTS:")
+        for result in self.test_results:
+            status = "✅" if result['status'] == 'PASS' else "❌"
+            print(f"{status} {result['test']}")
+            if result['details']:
+                print(f"    {result['details']}")
         
-        # Critical test results
-        critical_tests = [
-            "Update Match Teams",
-            "Verify Swaps Persisted", 
-            "Verify No Reset to Original",
-            "Start Session"
-        ]
+        print("\n🎯 CRITICAL TESTS SUMMARY:")
+        print(f"✅ Test 1 - Rating System Updates: {'PASS' if test1_result else 'FAIL'}")
+        print(f"✅ Test 2 - Next Round Generation: {'PASS' if test2_result else 'FAIL'}")
+        print(f"✅ Test 3 - Multi-Round Flow: {'PASS' if test3_result else 'FAIL'}")
         
-        critical_failures = [t for t in self.test_results 
-                           if t['test'] in critical_tests and not t['success']]
+        all_critical_passed = test1_result and test2_result and test3_result
         
-        if critical_failures:
-            print(f"\n🚨 CRITICAL FAILURES DETECTED:")
-            for test in critical_failures:
-                print(f"  - {test['test']}: {test['details']}")
-            print(f"\n❌ PLAYER SWAP PERSISTENCE: FAILED")
-        else:
-            print(f"\n✅ PLAYER SWAP PERSISTENCE: WORKING CORRECTLY")
-
-def main():
-    """Main test execution"""
-    tester = PlayerSwapPersistenceTester()
-    tester.run_comprehensive_test()
-    
-    # Return exit code based on test results
-    critical_tests = [
-        "Update Match Teams",
-        "Verify Swaps Persisted", 
-        "Verify No Reset to Original",
-        "Start Session"
-    ]
-    
-    critical_failures = [t for t in tester.test_results 
-                       if t['test'] in critical_tests and not t['success']]
-    
-    sys.exit(0 if len(critical_failures) == 0 else 1)
+        print(f"\n🏆 OVERALL RESULT: {'ALL CRITICAL FIXES VERIFIED ✅' if all_critical_passed else 'CRITICAL ISSUES REMAIN ❌'}")
+        
+        return all_critical_passed
 
 if __name__ == "__main__":
-    main()
+    tester = CourtChimeBackendTester()
+    success = tester.run_critical_bug_fix_tests()
+    
+    if success:
+        print("\n🎉 CRITICAL BUG FIX TESTING COMPLETED SUCCESSFULLY")
+    else:
+        print("\n⚠️ CRITICAL BUG FIX TESTING COMPLETED WITH ISSUES")
