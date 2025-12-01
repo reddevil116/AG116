@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """
-CourtChime Backend Test Suite - Player Swap Persistence Testing
-Focus: Comprehensive end-to-end testing of player swap functionality
-Testing the critical scenario where player swaps must persist through session start
+CourtChime Backend Comprehensive End-to-End Testing
+Test Focus: Complete Session Flow as requested in review
 """
 
 import requests
 import json
 import time
-import sys
+import random
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-# Backend URL from environment
-BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
-CLUB_NAME = "Main Club"
-ACCESS_CODE = "demo123"
+class CourtChimeBackendTester:
+    def __init__(self):
+        self.base_url = "https://courtchime.preview.emergentagent.com/api"
+        self.club_name = "Sandyford Pickleball Club"  # As requested in review
+        self.access_code = "demo123"  # Standard access code
+        self.session_data = None
+        self.players = []
+        self.matches = []
+        self.test_results = []
 
 class PlayerSwapPersistenceTester:
     def __init__(self):
