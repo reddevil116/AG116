@@ -13,7 +13,7 @@ from datetime import datetime
 
 class CourtChimeBackendTester:
     def __init__(self):
-        self.base_url = "https://courtchime.preview.emergentagent.com/api"
+        self.base_url = "https://chime-roster.preview.emergentagent.com/api"
         self.club_name = "Sandyford Pickleball Club"  # As requested in review
         self.access_code = "demo123"  # Standard access code
         self.session_data = None

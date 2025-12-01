@@ -127,7 +127,7 @@ The user-reported issue where player swaps were not persisting when "Let's Play"
 7. **✅ Data Integrity**: Match generation maintains proper structure and relationships
 
 #### Technical Implementation Verification:
-- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 - **Database**: SQLite with club-based multi-tenancy
 - **Authentication**: Main Club + demo123 access code verified
 - **API Endpoints**: All match generation and session management endpoints functional
@@ -300,7 +300,7 @@ if additional_courts_available > 0:
 
 ## Backend Test Summary
 **Date:** 2025-10-07  
-**Backend URL:** https://courtchime.preview.emergentagent.com/api  
+**Backend URL:** https://chime-roster.preview.emergentagent.com/api  
 **Database:** SQLite (courtchime.db)  
 
 ### Backend Status: ✅ **FULLY FUNCTIONAL WITH NEW CLUB AUTHENTICATION**
@@ -381,7 +381,7 @@ All authentication endpoints return correct response format:
 
 ## Frontend Test Results
 **Date:** 2025-10-07  
-**Frontend URL:** https://courtchime.preview.emergentagent.com  
+**Frontend URL:** https://chime-roster.preview.emergentagent.com  
 **Test Focus:** Player Remove/Add Button Functionality  
 **Mobile Testing:** iPhone 12 dimensions (390x844)
 
@@ -439,7 +439,7 @@ From console logs, the API integration is working flawlessly:
 
 ```
 🚀 BUTTON CLICKED! Starting toggle for: {playerId: 392c4cae-6a21-4580-9a95-d1a357d44af2, playerName: Jane Doe, currentStatus: true}
-📞 Making API call to: https://courtchime.preview.emergentagent.com/api/players/392c4cae-6a21-4580-9a95-d1a357d44af2/toggle-active
+📞 Making API call to: https://chime-roster.preview.emergentagent.com/api/players/392c4cae-6a21-4580-9a95-d1a357d44af2/toggle-active
 📡 API Response received: 200
 ✅ API Response data: {message: Player Jane Doe deactivated for today's session, isActive: false}
 🔄 About to refresh players...
@@ -693,7 +693,7 @@ The logout routing fix has been successfully implemented and verified:
 - **✅ Security**: Access code validation functioning properly
 
 ### 🔧 Technical Implementation Details
-- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 - **Database**: SQLite with club-based multi-tenancy
 - **Authentication Method**: Club name + access code validation
 - **API Prefix**: All endpoints correctly prefixed with '/api'
@@ -777,7 +777,7 @@ The bug where players were sitting out unnecessarily when both "Cross Category" 
 - **✅ Database Persistence**: All matches correctly saved and retrievable
 
 ### 🔧 Technical Details
-- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 - **Database**: SQLite with club-based multi-tenancy
 - **Authentication**: Main Club + demo123 access code verified
 - **API Endpoints**: All match generation and session management endpoints functional
@@ -877,7 +877,7 @@ result = await db_session.execute(select(DBPlayer).where(DBPlayer.club_name == c
 - **✅ Configuration Management**: Session config updates properly applied
 
 ### 🔧 Technical Details
-- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 - **Database**: SQLite with club-based multi-tenancy
 - **Authentication**: Main Club + demo123 access code verified
 - **API Endpoints**: All match generation and session management endpoints functional

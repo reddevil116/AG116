@@ -442,7 +442,7 @@ index 75727b3..e69de29 100644
 ---------------+from typing import Dict, List, Any
 ---------------+
 ---------------+# Backend URL from environment
----------------+BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
+---------------+BACKEND_URL = "https://chime-roster.preview.emergentagent.com/api"
 ---------------+
 ---------------+class MaximizeCourtsBackendTester:
 ---------------+    def __init__(self):
@@ -899,7 +899,7 @@ index 75727b3..e69de29 100644
 ----------------+from typing import Dict, List, Any
 ----------------+
 ----------------+# Configuration
-----------------+BASE_URL = "https://courtchime.preview.emergentagent.com/api"
+----------------+BASE_URL = "https://chime-roster.preview.emergentagent.com/api"
 ----------------+CLUB_NAME = "Main Club"
 ----------------+ACCESS_CODE = "demo123"
 ----------------+
@@ -1776,7 +1776,7 @@ index 75727b3..e69de29 100644
 ---------------------------------+import json
 ---------------------------------+import time
 ---------------------------------+
----------------------------------+BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
+---------------------------------+BACKEND_URL = "https://chime-roster.preview.emergentagent.com/api"
 ---------------------------------+
 ---------------------------------+def debug_toggle_issue():
 ---------------------------------+    session = requests.Session()
@@ -1862,7 +1862,7 @@ index 75727b3..e69de29 100644
 ---------------------------------+import json
 ---------------------------------+import time
 ---------------------------------+
----------------------------------+BACKEND_URL = "https://courtchime.preview.emergentagent.com/api"
+---------------------------------+BACKEND_URL = "https://chime-roster.preview.emergentagent.com/api"
 ---------------------------------+
 ---------------------------------+def test_player_active_status_detailed():
 ---------------------------------+    """Detailed test of player active status functionality"""
@@ -2241,7 +2241,7 @@ index 75727b3..e69de29 100644
 ---------------------------------+
 ---------------------------------+## Test Summary
 ---------------------------------+**Date:** 2025-10-07  
----------------------------------+**Backend URL:** https://courtchime.preview.emergentagent.com/api  
+---------------------------------+**Backend URL:** https://chime-roster.preview.emergentagent.com/api  
 ---------------------------------+**Database:** SQLite (courtchime.db)  
 ---------------------------------+
 ---------------------------------+## Backend Test Results
@@ -2366,7 +2366,7 @@ index 75727b3..e69de29 100644
 ---------------------------------## Test Summary
 --------------------------------+## Backend Test Summary
 -------------------------------- **Date:** 2025-10-07  
--------------------------------- **Backend URL:** https://courtchime.preview.emergentagent.com/api  
+-------------------------------- **Backend URL:** https://chime-roster.preview.emergentagent.com/api  
 -------------------------------- **Database:** SQLite (courtchime.db)  
 -------------------------------- 
 ---------------------------------## Backend Test Results
@@ -2413,7 +2413,7 @@ index 75727b3..e69de29 100644
 ---------------------------------## Detailed Test Results
 --------------------------------+## Frontend Test Results
 --------------------------------+**Date:** 2025-10-07  
---------------------------------+**Frontend URL:** https://courtchime.preview.emergentagent.com  
+--------------------------------+**Frontend URL:** https://chime-roster.preview.emergentagent.com  
 --------------------------------+**Test Focus:** Player Remove/Add Button Functionality  
 --------------------------------+**Mobile Testing:** iPhone 12 dimensions (390x844)
 --------------------------------+
@@ -2478,7 +2478,7 @@ index 75727b3..e69de29 100644
 ---------------------------------✅ Cross-player testing: Works with different players
 ---------------------------------✅ Active player filtering: Only active players used in matches
 --------------------------------+🚀 BUTTON CLICKED! Starting toggle for: {playerId: 392c4cae-6a21-4580-9a95-d1a357d44af2, playerName: Jane Doe, currentStatus: true}
---------------------------------+📞 Making API call to: https://courtchime.preview.emergentagent.com/api/players/392c4cae-6a21-4580-9a95-d1a357d44af2/toggle-active
+--------------------------------+📞 Making API call to: https://chime-roster.preview.emergentagent.com/api/players/392c4cae-6a21-4580-9a95-d1a357d44af2/toggle-active
 --------------------------------+📡 API Response received: 200
 --------------------------------+✅ API Response data: {message: Player Jane Doe deactivated for today's session, isActive: false}
 --------------------------------+🔄 About to refresh players...
@@ -2631,7 +2631,7 @@ index 75727b3..e69de29 100644
 -------------------------------- a/test_result.md
 -----------------------------+++ b/test_result.md
 -----------------------------@@ -5,11 +5,79 @@
------------------------------ **Backend URL:** https://courtchime.preview.emergentagent.com/api  
+----------------------------- **Backend URL:** https://chime-roster.preview.emergentagent.com/api  
 ----------------------------- **Database:** SQLite (courtchime.db)  
 ----------------------------- 
 ------------------------------### Backend Status: ✅ **FULLY FUNCTIONAL**
@@ -2911,7 +2911,7 @@ index 75727b3..e69de29 100644
 -----------------+- **✅ Security**: Access code validation functioning properly
 -----------------+
 -----------------+### 🔧 Technical Implementation Details
------------------+- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+-----------------+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 -----------------+- **Database**: SQLite with club-based multi-tenancy
 -----------------+- **Authentication Method**: Club name + access code validation
 -----------------+- **API Prefix**: All endpoints correctly prefixed with '/api'
@@ -3007,7 +3007,7 @@ index 75727b3..e69de29 100644
 ----------------+- **✅ Database Persistence**: All matches correctly saved and retrievable
 ----------------+
 ----------------+### 🔧 Technical Details
-----------------+- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+----------------+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 ----------------+- **Database**: SQLite with club-based multi-tenancy
 ----------------+- **Authentication**: Main Club + demo123 access code verified
 ----------------+- **API Endpoints**: All match generation and session management endpoints functional
@@ -3119,7 +3119,7 @@ index 75727b3..e69de29 100644
 ---------------+- **✅ Configuration Management**: Session config updates properly applied
 ---------------+
 ---------------+### 🔧 Technical Details
----------------+- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+---------------+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 ---------------+- **Database**: SQLite with club-based multi-tenancy
 ---------------+- **Authentication**: Main Club + demo123 access code verified
 ---------------+- **API Endpoints**: All match generation and session management endpoints functional
@@ -3230,7 +3230,7 @@ index 75727b3..e69de29 100644
 -------------+7. **✅ Data Integrity**: Match generation maintains proper structure and relationships
 -------------+
 -------------+#### Technical Implementation Verification:
--------------+- **Backend URL**: https://courtchime.preview.emergentagent.com/api
+-------------+- **Backend URL**: https://chime-roster.preview.emergentagent.com/api
 -------------+- **Database**: SQLite with club-based multi-tenancy
 -------------+- **Authentication**: Main Club + demo123 access code verified
 -------------+- **API Endpoints**: All match generation and session management endpoints functional
