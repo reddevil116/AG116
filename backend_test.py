@@ -14,12 +14,13 @@ from datetime import datetime
 class CourtChimeBackendTester:
     def __init__(self):
         self.base_url = "https://chime-roster.preview.emergentagent.com/api"
-        self.club_name = "Sandyford Pickleball Club"  # As requested in review
+        self.club_name = "Main Club"  # As specified in review request
         self.access_code = "demo123"  # Standard access code
         self.session_data = None
         self.players = []
         self.matches = []
         self.test_results = []
+        self.initial_player_data = {}
         
     def log_test(self, test_name: str, status: str, details: str = ""):
         """Log test results"""
