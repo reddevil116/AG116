@@ -348,9 +348,14 @@ async def update_player_ratings(match: dict, teamA_score: int, teamB_score: int,
             db_player.recent_form = json.dumps(recent_form)
             db_player.rating_history = json.dumps(rating_history)
             db_player.last_updated = datetime.now()
+        
+        # CRITICAL FIX: Commit the rating changes to database
+        await db_session.commit()
+        print(f"✅ Successfully updated ratings for {len(all_player_ids)} players")
             
     except Exception as e:
-        print(f"Error updating player ratings: {e}")
+        print(f"❌ Error updating player ratings: {e}")
+        await db_session.rollback()
         # Continue without failing the match score update
 
 def calculate_partner_score(player_a: str, player_b: str, histories: Dict[str, Any]) -> int:
