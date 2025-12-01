@@ -21,14 +21,53 @@ class CourtChimeBackendTester:
         self.matches = []
         self.test_results = []
 
-class PlayerSwapPersistenceTester:
-    def __init__(self):
-        self.session = requests.Session()
-        self.test_results = []
-        self.generated_matches = []
-        self.original_teams = {}
-        self.swapped_teams = {}
-        self.players = []
+        
+    def log_test(self, test_name: str, status: str, details: str = ""):
+        """Log test results"""
+        result = {
+            "test": test_name,
+            "status": status,
+            "details": details,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
+        status_emoji = "✅" if status == "PASS" else "❌" if status == "FAIL" else "⚠️"
+        print(f"{status_emoji} {test_name}: {status}")
+        if details:
+            print(f"   Details: {details}")
+    
+    def make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None) -> Dict:
+        """Make HTTP request with error handling"""
+        url = f"{self.base_url}{endpoint}"
+        try:
+            if method.upper() == "GET":
+                response = requests.get(url, params=params, timeout=30)
+            elif method.upper() == "POST":
+                response = requests.post(url, json=data, params=params, timeout=30)
+            elif method.upper() == "PUT":
+                response = requests.put(url, json=data, params=params, timeout=30)
+            elif method.upper() == "PATCH":
+                response = requests.patch(url, json=data, params=params, timeout=30)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
+            
+            return {
+                "status_code": response.status_code,
+                "data": response.json() if response.content else {},
+                "success": 200 <= response.status_code < 300
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                "status_code": 0,
+                "data": {"error": str(e)},
+                "success": False
+            }
+        except json.JSONDecodeError:
+            return {
+                "status_code": response.status_code,
+                "data": {"error": "Invalid JSON response"},
+                "success": False
+            }
         
     def log_test(self, test_name: str, success: bool, details: str = ""):
         """Log test result"""
