@@ -23,7 +23,7 @@ class CrossCategoryMaximizeCourtsTester:
         """Log test result"""
         status = "✅ PASS" if success else "❌ FAIL"
         result = {
-            "test": test_name,
+            "test": test_name, # test name
             "status": status,
             "success": success,
             "details": details
