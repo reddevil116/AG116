@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-CourtChime Backend Comprehensive End-to-End Testing
-Test Focus: Complete Session Flow as requested in review
+CourtChime Backend Testing - Critical Bug Fixes Verification
+Testing the rating system updates and next round generation fixes
 """
 
 import requests
