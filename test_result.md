@@ -1,5 +1,71 @@
 # CourtChime Test Results
 
+## 🔧 CRITICAL BUG FIXES - 2025-12-01
+**Date:** 2025-12-01  
+**Engineer:** AI Assistant  
+**Status:** ✅ FIXES IMPLEMENTED - READY FOR TESTING
+
+### 🐛 Bugs Fixed:
+
+#### 1. ✅ Rating System Not Updating
+**Issue:** Player ratings, wins, losses, and recent form were not being saved when match scores were entered.
+
+**Root Cause:** The `update_player_ratings` function in `/app/backend/server.py` (lines 230-354) was modifying player database objects but never committing the changes to the database. The changes existed only in memory and were lost.
+
+**Fix Applied:**
+- Added `await db_session.commit()` at line 353 to commit rating changes
+- Added success logging to track rating updates
+- Added `await db_session.rollback()` in error handler for proper error recovery
+- Enhanced error logging with emoji indicators for better visibility
+
+**Files Modified:** `/app/backend/server.py` (lines 348-357)
+
+#### 2. ✅ Next Round Generation Failing
+**Issue:** When clicking "Next Round" in Legacy mode, the API returned 200 success but no Round 2 matches were created.
+
+**Root Cause:** The match deletion operation (line 2367) was not being committed before creating new matches. This caused a database transaction conflict where the deletion and creation operations interfered with each other.
+
+**Fix Applied:**
+- Added `await db_session.commit()` after the match deletion at line 2370
+- Added debug logging to track deletion success
+- Ensured clean state before new match generation
+
+**Files Modified:** `/app/backend/server.py` (lines 2365-2372)
+
+#### 3. ✅ Bonus Fix: Hardcoded Club Name
+**Issue:** The `schedule_round` function had a hardcoded "Main Club" reference at line 874, which would break multi-tenant functionality.
+
+**Fix Applied:**
+- Changed `DBSession.club_name == "Main Club"` to `DBSession.club_name == club_name`
+- Now properly uses the dynamic club_name parameter
+
+**Files Modified:** `/app/backend/server.py` (line 874)
+
+### 🧪 Testing Required:
+
+**Test 1: Rating System**
+1. Generate matches and start a session
+2. Enter scores for multiple matches (e.g., 11-9, 11-7)
+3. Verify player ratings update in the Standings
+4. Verify wins/losses increment correctly
+5. Verify recent form shows W/L letters
+
+**Test 2: Next Round Generation**
+1. Generate Round 1 matches
+2. Enter scores for all matches
+3. Click "Next Round"
+4. Verify Round 2 matches are generated
+5. Verify new player rotations
+6. Verify round number increments correctly
+
+**Test 3: Multi-Round Session**
+1. Complete Round 1 → Round 2 → Round 3
+2. Verify ratings update after each round
+3. Verify stats accumulate correctly
+4. Verify session state remains consistent
+
+---
+
 ## 🎯 PLAYER SWAP PERSISTENCE TEST RESULTS
 **Date:** 2025-01-28  
 **Test Focus:** Comprehensive end-to-end testing of player swap persistence functionality  
