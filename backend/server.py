@@ -871,7 +871,7 @@ async def schedule_round(round_index: int, db_session: AsyncSession = None, club
         session_obj.histories = update_histories(match, session_obj.histories)
     
     # Update session histories - SQLite version
-    result = await db_session.execute(select(DBSession).where(DBSession.club_name == "Main Club"))
+    result = await db_session.execute(select(DBSession).where(DBSession.club_name == club_name))
     db_session_obj = result.scalar_one_or_none()
     if db_session_obj:
         db_session_obj.histories = json.dumps(session_obj.histories)
