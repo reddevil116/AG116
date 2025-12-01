@@ -2366,6 +2366,10 @@ async def start_next_round(club_name: str = "Main Club", db_session: AsyncSessio
             # Clear previous round matches for legacy mode
             await db_session.execute(delete(DBMatch).where(DBMatch.club_name == club_name))
             
+            # CRITICAL FIX: Commit the deletion before creating new matches
+            await db_session.commit()
+            print(f"🗑️ Deleted all previous matches for legacy mode round {next_round}")
+            
             # Get all players for reshuffling
             result = await db_session.execute(select(DBPlayer).where(DBPlayer.club_name == club_name))
             players = result.scalars().all()
