@@ -2320,7 +2320,14 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
         # Find players sitting out (active but not in any match)
         sitting_players = [p.id for p in all_active_players if p.id not in players_in_matches and not p.sit_next_round]
         
-        print(f"🔍 Top Court Debug: {len(sitting_players)} players sitting, {len(players_in_matches)} playing")
+        print(f"\n📊 COURT GROUP DISTRIBUTION:")
+        for idx, groups in enumerate(court_groups):
+            total_players = sum(len(g) for g in groups)
+            print(f"   Court {idx}: {len(groups)} groups, {total_players} players - {groups}")
+        
+        print(f"\n🔍 Top Court Debug: {len(sitting_players)} players sitting out, {len(players_in_matches)} playing")
+        if sitting_players:
+            print(f"   Sitting players: {sitting_players}")
         
         # Create new matches with previous partners playing AGAINST each other
         new_matches = []
