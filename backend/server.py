@@ -2257,12 +2257,24 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
             team_b = json.loads(match.team_b) if isinstance(match.team_b, str) else match.team_b
             
             # Determine winners and losers based on score
-            if match.score_a > match.score_b:
+            # CRITICAL FIX: Handle unscored matches (both scores are 0)
+            if match.score_a == 0 and match.score_b == 0:
+                # Match not scored - treat all players as "stayed on same court"
+                # Both teams stay on their current court for fair rotation
+                court_groups[court_idx].append(team_a)
+                court_groups[court_idx].append(team_b)
+                continue  # Skip normal winner/loser logic
+            elif match.score_a > match.score_b:
                 winners = team_a  # Keep as group [player1, player2]
                 losers = team_b
-            else:
+            elif match.score_b > match.score_a:
                 winners = team_b
                 losers = team_a
+            else:
+                # Tie - treat both as staying on same court
+                court_groups[court_idx].append(team_a)
+                court_groups[court_idx].append(team_b)
+                continue
             
             # Apply Top Court movement rules - move groups, not individuals
             if court_idx == 0:
