@@ -3058,6 +3058,12 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
     .slice(0, 5)
     .filter(p => (p.wins || 0) > 0); // Only show players with at least 1 win
 
+  console.log('🏆 Top Winners Debug:', {
+    totalPlayers: sortedPlayers.length,
+    topWinnersCount: topWinners.length,
+    topWinners: topWinners.map(p => ({ name: p.name, wins: p.wins }))
+  });
+
   return (
     <View style={styles.standingsContainer}>
       {/* Header */}
