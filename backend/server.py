@@ -2343,6 +2343,8 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
                     # Take 2 sitting players as a new group
                     new_group = [sitting_players.pop(0), sitting_players.pop(0)]
                     groups_on_court.append(new_group)
+                    # Update the actual court_groups list
+                    court_groups[court_idx] = groups_on_court
                     print(f"✅ Added group to court {court_idx}: {new_group}")
                 
                 if len(groups_on_court) < 2:
