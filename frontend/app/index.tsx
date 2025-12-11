@@ -3090,14 +3090,15 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScroll}>
             <View style={styles.barChartContainer}>
               {topWinners.map((player, index) => {
-                const maxWins = topWinners[0]?.wins || 1;
-                const barHeight = ((player.wins || 0) / maxWins) * 120;
+                const playerWins = player.stats?.wins || player.wins || 0;
+                const maxWins = topWinners[0]?.stats?.wins || topWinners[0]?.wins || 1;
+                const barHeight = (playerWins / maxWins) * 120;
                 
                 return (
                   <View key={player.id} style={styles.barWrapper}>
                     {/* Bar */}
                     <View style={styles.barColumn}>
-                      <Text style={styles.barValue}>{player.wins || 0}</Text>
+                      <Text style={styles.barValue}>{playerWins}</Text>
                       <View 
                         style={[
                           styles.bar, 
