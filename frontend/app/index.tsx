@@ -3126,6 +3126,12 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
             </View>
           </ScrollView>
         </View>
+      ) : (
+        <View style={{ padding: 20, backgroundColor: '#FF6B6B', borderRadius: 8, margin: 16 }}>
+          <Text style={{ color: '#FFF', textAlign: 'center' }}>
+            No top winners yet - topWinners.length = {topWinners.length}
+          </Text>
+        </View>
       )}
       
       {/* Standings List */}
