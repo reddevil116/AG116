@@ -3064,8 +3064,12 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
 
   console.log('🏆 Top Winners Debug:', {
     totalPlayers: sortedPlayers.length,
+    playersWithWins: sortedPlayers.filter(p => (p.stats?.wins || p.wins || 0) > 0).length,
     topWinnersCount: topWinners.length,
-    topWinners: topWinners.map(p => ({ name: p.name, wins: p.wins, statsWins: p.stats?.wins }))
+    topWinners: topWinners.map(p => ({ name: p.name, wins: p.wins, statsWins: p.stats?.wins })),
+    allPlayersWithWins: sortedPlayers
+      .filter(p => (p.stats?.wins || p.wins || 0) > 0)
+      .map(p => ({ name: p.name, statsWins: p.stats?.wins, wins: p.wins }))
   });
 
   return (
