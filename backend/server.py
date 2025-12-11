@@ -2243,8 +2243,12 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
         )
         previous_matches = result.scalars().all()
         
+        print(f"\n🎾 ===== TOP COURT ROUND {round_index} GENERATION =====")
+        print(f"📋 Found {len(previous_matches)} matches from Round {round_index - 1}")
+        
         if not previous_matches:
             # First round - use legacy scheduling
+            print("⚠️ No previous matches found, using legacy scheduling")
             return await schedule_round(round_index, db_session, club_name)
         
         # Track groups of 2 players (previous partners) that will be split
