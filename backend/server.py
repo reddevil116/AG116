@@ -2354,7 +2354,9 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
                 print(f"⚠️ Court {court_idx} has {len(groups_on_court)} groups, keeping first 2")
                 for extra_group in groups_on_court[2:]:
                     sitting_players.extend(extra_group)
-                groups_on_court = groups_on_court[:2]
+                # CRITICAL FIX: Update the actual court_groups list, not just local variable
+                court_groups[court_idx] = groups_on_court[:2]
+                groups_on_court = court_groups[court_idx]
             
             # We have 2 groups of 2 players each
             group1 = groups_on_court[0]  # [player1, player2] - were partners
