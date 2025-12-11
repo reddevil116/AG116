@@ -2338,7 +2338,7 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
         
         # Create new matches with previous partners playing AGAINST each other
         new_matches = []
-        for court_idx in range(num_courts):
+        for court_idx in range(actual_courts_used):
             groups_on_court = court_groups[court_idx]
             
             # CRITICAL FIX: Handle courts without exactly 2 groups
