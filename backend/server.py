@@ -2260,22 +2260,28 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
             team_a = json.loads(match.team_a) if isinstance(match.team_a, str) else match.team_a
             team_b = json.loads(match.team_b) if isinstance(match.team_b, str) else match.team_b
             
+            print(f"  🏓 Court {court_idx}: {team_a} vs {team_b} = {match.score_a}-{match.score_b}")
+            
             # Determine winners and losers based on score
             # CRITICAL FIX: Handle unscored matches (both scores are 0)
             if match.score_a == 0 and match.score_b == 0:
                 # Match not scored - treat all players as "stayed on same court"
                 # Both teams stay on their current court for fair rotation
+                print(f"     ⚠️ Unscored match - both teams stay at Court {court_idx}")
                 court_groups[court_idx].append(team_a)
                 court_groups[court_idx].append(team_b)
                 continue  # Skip normal winner/loser logic
             elif match.score_a > match.score_b:
                 winners = team_a  # Keep as group [player1, player2]
                 losers = team_b
+                print(f"     ✅ Winners: {winners}, Losers: {losers}")
             elif match.score_b > match.score_a:
                 winners = team_b
                 losers = team_a
+                print(f"     ✅ Winners: {winners}, Losers: {losers}")
             else:
                 # Tie - treat both as staying on same court
+                print(f"     ⚠️ Tie match - both teams stay at Court {court_idx}")
                 court_groups[court_idx].append(team_a)
                 court_groups[court_idx].append(team_b)
                 continue
@@ -2285,11 +2291,15 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
                 # Top Court: winner group stays at top, loser group drops to bottom
                 court_groups[0].append(winners)
                 court_groups[num_courts - 1].append(losers)
+                print(f"     ↗️ Winners {winners} stay at Court 0")
+                print(f"     ↘️ Losers {losers} drop to Court {num_courts - 1}")
             else:
                 # Other courts: winner group moves up, loser group stays
                 target_court = court_idx - 1
                 court_groups[target_court].append(winners)
                 court_groups[court_idx].append(losers)
+                print(f"     ↗️ Winners {winners} move up to Court {target_court}")
+                print(f"     ↔️ Losers {losers} stay at Court {court_idx}")
         
         # Delete previous matches
         await db_session.execute(delete(DBMatch).where(DBMatch.club_name == club_name))
