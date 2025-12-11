@@ -4470,4 +4470,91 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
   },
+  // Top 5 Winners Chart Styles
+  chartCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  chartScroll: {
+    marginHorizontal: -8,
+  },
+  barChartContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 20,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    minWidth: '100%',
+  },
+  barWrapper: {
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 60,
+  },
+  barColumn: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    height: 140,
+    marginBottom: 8,
+  },
+  bar: {
+    width: 40,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    minHeight: 20,
+  },
+  barValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  barLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+    width: 60,
+  },
+  rankBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  goldBadge: {
+    backgroundColor: '#FFD700',
+  },
+  silverBadge: {
+    backgroundColor: '#C0C0C0',
+  },
+  bronzeBadge: {
+    backgroundColor: '#CD7F32',
+  },
+  rankBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });
