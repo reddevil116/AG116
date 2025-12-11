@@ -2296,9 +2296,10 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
             if court_idx == 0:
                 # Top Court: winner group stays at top, loser group drops to bottom
                 court_groups[0].append(winners)
-                court_groups[num_courts - 1].append(losers)
+                bottom_court = actual_courts_used - 1
+                court_groups[bottom_court].append(losers)
                 print(f"     ↗️ Winners {winners} stay at Court 0")
-                print(f"     ↘️ Losers {losers} drop to Court {num_courts - 1}")
+                print(f"     ↘️ Losers {losers} drop to Court {bottom_court}")
             else:
                 # Other courts: winner group moves up, loser group stays
                 target_court = court_idx - 1
