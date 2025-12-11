@@ -3052,6 +3052,12 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
     );
   }
 
+  // Get top 5 players by wins
+  const topWinners = [...sortedPlayers]
+    .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+    .slice(0, 5)
+    .filter(p => (p.wins || 0) > 0); // Only show players with at least 1 win
+
   return (
     <View style={styles.standingsContainer}>
       {/* Header */}
@@ -3063,6 +3069,58 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
           {sortedPlayers.length} players
         </Text>
       </View>
+
+      {/* Top 5 Winners Chart */}
+      {topWinners.length > 0 && (
+        <View style={styles.chartCard}>
+          <View style={styles.chartHeader}>
+            <Ionicons name="trophy" size={24} color="#FFD700" />
+            <Text style={styles.chartTitle}>Top 5 Winners</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScroll}>
+            <View style={styles.barChartContainer}>
+              {topWinners.map((player, index) => {
+                const maxWins = topWinners[0]?.wins || 1;
+                const barHeight = ((player.wins || 0) / maxWins) * 120;
+                
+                return (
+                  <View key={player.id} style={styles.barWrapper}>
+                    {/* Bar */}
+                    <View style={styles.barColumn}>
+                      <Text style={styles.barValue}>{player.wins || 0}</Text>
+                      <View 
+                        style={[
+                          styles.bar, 
+                          { 
+                            height: Math.max(barHeight, 20),
+                            backgroundColor: index === 0 ? '#FFD700' : 
+                                           index === 1 ? '#C0C0C0' : 
+                                           index === 2 ? '#CD7F32' : 
+                                           colors.primary
+                          }
+                        ]} 
+                      />
+                    </View>
+                    {/* Player Name */}
+                    <Text style={styles.barLabel} numberOfLines={2}>
+                      {player.name.split(' ')[0]}
+                    </Text>
+                    {/* Rank Badge */}
+                    <View style={[
+                      styles.rankBadge,
+                      index === 0 && styles.goldBadge,
+                      index === 1 && styles.silverBadge,
+                      index === 2 && styles.bronzeBadge
+                    ]}>
+                      <Text style={styles.rankBadgeText}>#{index + 1}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      )}
       
       {/* Standings List */}
       <ScrollView style={styles.standingsList}>
