@@ -3057,10 +3057,13 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
     .sort((a, b) => {
       const aWins = (a.stats?.wins || a.wins || 0);
       const bWins = (b.stats?.wins || b.wins || 0);
-      return bWins - aWins;
+      // Primary sort: by wins (descending)
+      if (bWins !== aWins) return bWins - aWins;
+      // Secondary sort: by name (alphabetical) for consistent ordering
+      return a.name.localeCompare(b.name);
     })
-    .slice(0, 5)
-    .filter(p => (p.stats?.wins || p.wins || 0) > 0); // Only show players with at least 1 win
+    .filter(p => (p.stats?.wins || p.wins || 0) > 0) // Only players with at least 1 win
+    .slice(0, 5); // Take top 5
 
   console.log('🏆 Top Winners Debug:', {
     totalPlayers: sortedPlayers.length,
