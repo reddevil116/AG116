@@ -2290,16 +2290,50 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
         # Delete previous matches
         await db_session.execute(delete(DBMatch).where(DBMatch.club_name == club_name))
         
+        # Get all active players to handle sitouts
+        result = await db_session.execute(
+            select(DBPlayer).where(and_(DBPlayer.club_name == club_name, DBPlayer.is_active == True))
+        )
+        all_active_players = result.scalars().all()
+        all_active_ids = {p.id for p in all_active_players}
+        
+        # Track which players are in matches
+        players_in_matches = set()
+        for court_groups_list in court_groups:
+            for group in court_groups_list:
+                players_in_matches.update(group)
+        
+        # Find players sitting out (active but not in any match)
+        sitting_players = [p.id for p in all_active_players if p.id not in players_in_matches and not p.sit_next_round]
+        
+        print(f"🔍 Top Court Debug: {len(sitting_players)} players sitting, {len(players_in_matches)} playing")
+        
         # Create new matches with previous partners playing AGAINST each other
         new_matches = []
         for court_idx in range(num_courts):
             groups_on_court = court_groups[court_idx]
             
-            if len(groups_on_court) != 2:
-                # Handle edge case: not exactly 2 groups (4 players)
-                print(f"Warning: Court {court_idx} has {len(groups_on_court)} groups instead of 2")
-                # Skip this court or fill with random players
-                continue
+            # CRITICAL FIX: Handle courts without exactly 2 groups
+            if len(groups_on_court) < 2:
+                # Not enough groups - try to fill with sitting players
+                print(f"⚠️ Court {court_idx} has {len(groups_on_court)} groups, need 2. Filling with sitting players...")
+                
+                while len(groups_on_court) < 2 and len(sitting_players) >= 2:
+                    # Take 2 sitting players as a new group
+                    new_group = [sitting_players.pop(0), sitting_players.pop(0)]
+                    groups_on_court.append(new_group)
+                    print(f"✅ Added group to court {court_idx}: {new_group}")
+                
+                if len(groups_on_court) < 2:
+                    print(f"❌ Court {court_idx} still has only {len(groups_on_court)} groups, skipping")
+                    continue
+                    
+            elif len(groups_on_court) > 2:
+                # Too many groups - keep only first 2 and put rest back as sitting
+                print(f"⚠️ Court {court_idx} has {len(groups_on_court)} groups, keeping first 2")
+                for extra_group in groups_on_court[2:]:
+                    sitting_players.extend(extra_group)
+                groups_on_court = groups_on_court[:2]
             
             # We have 2 groups of 2 players each
             group1 = groups_on_court[0]  # [player1, player2] - were partners
