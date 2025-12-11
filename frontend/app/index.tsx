@@ -3077,7 +3077,7 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
       </View>
 
       {/* Top 5 Winners Chart */}
-      {topWinners.length > 0 && (
+      {topWinners.length > 0 ? (
         <View style={styles.chartCard}>
           <View style={styles.chartHeader}>
             <Ionicons name="trophy" size={24} color="#FFD700" />
