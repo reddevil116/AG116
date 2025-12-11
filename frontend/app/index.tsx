@@ -3052,16 +3052,20 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
     );
   }
 
-  // Get top 5 players by wins
+  // Get top 5 players by wins - use stats.wins if available, fallback to wins field
   const topWinners = [...sortedPlayers]
-    .sort((a, b) => (b.wins || 0) - (a.wins || 0))
+    .sort((a, b) => {
+      const aWins = (a.stats?.wins || a.wins || 0);
+      const bWins = (b.stats?.wins || b.wins || 0);
+      return bWins - aWins;
+    })
     .slice(0, 5)
-    .filter(p => (p.wins || 0) > 0); // Only show players with at least 1 win
+    .filter(p => (p.stats?.wins || p.wins || 0) > 0); // Only show players with at least 1 win
 
   console.log('🏆 Top Winners Debug:', {
     totalPlayers: sortedPlayers.length,
     topWinnersCount: topWinners.length,
-    topWinners: topWinners.map(p => ({ name: p.name, wins: p.wins }))
+    topWinners: topWinners.map(p => ({ name: p.name, wins: p.wins, statsWins: p.stats?.wins }))
   });
 
   return (
