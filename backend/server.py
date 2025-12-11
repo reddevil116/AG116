@@ -2253,7 +2253,13 @@ async def schedule_top_court_round(round_index: int, db_session: AsyncSession, c
         
         # Track groups of 2 players (previous partners) that will be split
         num_courts = session_config.numCourts
-        court_groups = [[] for _ in range(num_courts)]  # Each entry is a list of 2-player groups
+        
+        # CRITICAL FIX: Only use courts that actually had matches in previous round
+        # Find the highest court index that had a match
+        actual_courts_used = max(match.court_index for match in previous_matches) + 1
+        print(f"   Using {actual_courts_used} courts (from {len(previous_matches)} matches)")
+        
+        court_groups = [[] for _ in range(actual_courts_used)]  # Each entry is a list of 2-player groups
         
         for match in previous_matches:
             court_idx = match.court_index
