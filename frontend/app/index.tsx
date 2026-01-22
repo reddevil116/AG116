@@ -3060,7 +3060,9 @@ function PlayersBoard({ players, matches, session }: { players: Player[]; matche
       // Primary sort: by wins (descending)
       if (bWins !== aWins) return bWins - aWins;
       // Secondary sort: by name (alphabetical) for consistent ordering
-      return a.name.localeCompare(b.name);
+      const aName = a.name || '';
+      const bName = b.name || '';
+      return aName.localeCompare(bName);
     })
     .filter(p => (p.stats?.wins || p.wins || 0) > 0) // Only players with at least 1 win
     .slice(0, 5); // Take top 5
